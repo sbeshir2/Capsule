@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log in · Capsule</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="nav">
+    <a href="login.html" class="brand">Capsule</a>
+    <div class="nav-links">
+      <a href="login.html">Log in</a>
+      <a href="register.html" class="btn btn-dark">Get started</a>
+    </div>
+  </nav>
+
+  <main class="split">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <p class="eyebrow">Your real wardrobe, organized</p>
+          <h1>Wear what you already own, better.</h1>
+          <p>Capsule catalogs the clothes in your closet, builds outfits from the pieces you actually have, and plans what to wear around your calendar and the weather.</p>
+          <div class="hero-actions">
+            <a href="register.html" class="btn btn-dark">Take the 2-minute quiz &rarr;</a>
+            <a href="login.html" class="btn">I have an account</a>
+          </div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="card big"></div>
+          <div class="card small"></div>
+        </div>
+      </div>
+
+      <div class="parts">
+        <h2>Three parts, one wardrobe</h2>
+        <div class="parts-grid">
+          <div class="card"></div>
+          <div class="card"></div>
+          <div class="card"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-inner">
+        <div class="tabs">
+          <a href="register.html">Sign up</a>
+          <a href="login.html" class="active">Log-in</a>
+        </div>
+
+        <h1>Welcome back</h1>
+        <p class="sub">Log in to see today's outfit.</p>
+
+        <form action="/login" method="POST">
+          <div class="field">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="Your username" required>
+          </div>
+
+          <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="8+ characters" required>
+          </div>
+
+          <div class="row">
+            <label class="check"><input type="checkbox" name="remember"> Remember me</label>
+            <a href="#" class="forgot">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn btn-dark btn-block">Log in</button>
+        </form>
+
+        <div class="divider"><span>or</span></div>
+
+        <button type="button" class="btn btn-block btn-social">Continue with Google</button>
+        <button type="button" class="btn btn-block btn-social">Continue with Apple</button>
+
+        <p class="legal">By continuing you agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a></p>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"></footer>
+</body>
+</html>

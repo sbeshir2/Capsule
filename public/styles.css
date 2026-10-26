@@ -1,0 +1,157 @@
+/* Capsule - shared styles for register.html, login.html and server responses */
+:root {
+  --ink: #111;
+  --muted: #666;
+  --line: #cfcfcf;
+  --bg: #fff;
+  --accent: #3b5bdb;
+  --radius: 10px;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body { background: var(--bg); color: var(--ink); min-height: 100vh; }
+
+a { color: inherit; }
+
+/* ---------- Top nav ---------- */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--ink);
+}
+.brand { font-weight: 700; font-size: 1.25rem; text-decoration: none; }
+.nav-links { display: flex; gap: 12px; align-items: center; }
+.nav-links a { font-size: 0.85rem; font-weight: 600; text-decoration: none; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  background: var(--bg);
+  color: var(--ink);
+}
+.btn-dark { background: var(--ink); color: #fff; }
+.btn-dark:hover { background: #333; }
+.btn-block { width: 100%; padding: 12px 16px; font-size: 1rem; }
+.btn-social { margin-bottom: 10px; padding: 10px 16px; font-size: 0.85rem; }
+.btn-social:hover { background: #f4f4f4; }
+
+/* ---------- Split layout ---------- */
+.split {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  min-height: calc(100vh - 57px - 28px);
+}
+.hero { padding: 40px 32px; border-right: 1px solid var(--ink); }
+.panel { display: flex; justify-content: center; padding: 40px 32px; }
+.panel-inner { width: 100%; max-width: 380px; }
+.footer { border-top: 1px solid var(--ink); height: 28px; }
+
+/* ---------- Hero ---------- */
+.hero-top { display: grid; grid-template-columns: 1fr 200px; gap: 16px; }
+.eyebrow { font-size: 0.7rem; letter-spacing: 0.04em; color: var(--muted); text-transform: uppercase; }
+.hero h1 { font-size: clamp(1.8rem, 3.2vw, 2.6rem); line-height: 1.02; margin: 8px 0 12px; letter-spacing: -0.02em; }
+.hero p { font-size: 0.9rem; color: #444; line-height: 1.4; max-width: 34ch; }
+.hero-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.hero-art { position: relative; height: 200px; }
+.hero-art .card { position: absolute; }
+.hero-art .card.big { top: 0; right: 0; width: 170px; height: 160px; }
+.hero-art .card.small { bottom: 0; left: 0; width: 120px; height: 70px; background: #f6f6f6; }
+.card { border: 1px solid var(--ink); border-radius: var(--radius); box-shadow: 0 2px 6px rgba(0,0,0,.12); background: #fafafa; }
+
+.parts { margin-top: 56px; }
+.parts h2 { font-size: 1rem; margin-bottom: 14px; }
+.parts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.parts-grid .card { min-height: 110px; }
+
+/* ---------- Sign up / Log-in toggle ---------- */
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+.tabs a {
+  text-align: center;
+  padding: 8px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+.tabs a.active { background: var(--ink); color: #fff; }
+
+/* ---------- Form ---------- */
+.panel h1 { text-align: center; font-size: 1.5rem; }
+.sub { text-align: center; font-size: 0.75rem; color: var(--muted); margin: 4px 0 24px; }
+
+.field { margin-bottom: 16px; }
+.field label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+.field input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.95rem;
+}
+.field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.row { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-bottom: 18px; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+.forgot { color: var(--accent); text-decoration: none; }
+.forgot:hover { text-decoration: underline; }
+
+.divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.75rem; margin: 22px 0 18px; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+.legal { text-align: center; font-size: 0.65rem; color: var(--muted); margin-top: 20px; }
+.legal a { color: inherit; }
+
+/* ---------- Server message page (success / error) ---------- */
+.message-wrap { display: flex; justify-content: center; padding: 80px 24px; }
+.message {
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  border: 1.5px solid var(--ink);
+  border-radius: 14px;
+  padding: 36px 28px;
+}
+.message .icon {
+  width: 52px; height: 52px; margin: 0 auto 14px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 1.5rem; font-weight: 700;
+  border: 1.5px solid var(--ink);
+}
+.message.success .icon { background: var(--ink); color: #fff; }
+.message h1 { font-size: 1.35rem; margin-bottom: 8px; }
+.message p { color: #444; font-size: 0.9rem; margin-bottom: 22px; }
+
+/* ---------- Mobile ---------- */
+@media (max-width: 800px) {
+  .split { grid-template-columns: 1fr; }
+  .hero { border-right: none; border-bottom: 1px solid var(--ink); padding: 28px 16px; }
+  .panel { padding: 28px 16px; }
+  .hero-top { grid-template-columns: 1fr; }
+  .hero-art { display: none; }
+  .parts { margin-top: 28px; }
+  .parts-grid { grid-template-columns: 1fr; }
+}
