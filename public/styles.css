@@ -358,3 +358,32 @@ img { display: block; max-width: 100%; }
 
 /* Keep every photo black & white, even if a color file is used */
 .hero-bg, .part img { filter: grayscale(1); }
+
+/* ---------- Profile page (/profile) ---------- */
+.message.profile { max-width: 480px; text-align: left; }
+.profile-eyebrow {
+  font-size: 11px !important;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink) !important;
+  margin-bottom: 8px !important;
+}
+.message.profile h1 { font-size: 44px; }
+.profile-list { margin: 0 0 28px; border-top: 1px solid var(--ink); }
+.profile-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--soft);
+  font-size: 14px;
+}
+.profile-list dt {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  align-self: center;
+}
+.profile-list dd { color: var(--mute); text-align: right; word-break: break-word; }
