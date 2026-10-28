@@ -1,5 +1,5 @@
 // server.js - Capsule register / login server (uses the MySQL pool in db.js)
-// Run: node server.js  ->  open http://localhost:3000/register.html
+// Run: npm install   then   node server.js   ->  open http://localhost:3000/register.html
 
 const express = require('express');
 const path = require('path');
@@ -13,7 +13,7 @@ const SALT_ROUNDS = 10;
 // Read form data from the HTML forms
 app.use(express.urlencoded({ extended: true }));
 
-// Serve register.html, login.html and styles.css from /public
+// Serve register.html, login.html, styles.css and images from /public
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Escape user input before putting it into HTML

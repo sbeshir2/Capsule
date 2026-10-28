@@ -7,42 +7,59 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <nav class="nav">
+  <header class="nav">
+    <nav class="nav-left" aria-label="Sections">
+      <a href="#">Closet</a>
+      <a href="#">Outfits</a>
+      <a href="#">Plan</a>
+    </nav>
     <a href="register.html" class="brand">Capsule</a>
     <div class="nav-links">
       <a href="login.html">Log in</a>
-      <a href="register.html" class="btn btn-dark">Get started</a>
+      <a href="register.html" class="nav-cta">Get started</a>
     </div>
-  </nav>
+  </header>
 
   <main class="split">
+    <!-- Left: full-bleed photo with copy on top -->
     <section class="hero">
-      <div class="hero-top">
-        <div>
+      <img class="hero-bg" src="images/motion-coats.jpg" alt="">
+      <div class="hero-shade"></div>
+
+      <p class="hero-tag"><span>(01) The winter edit</span><span>Capsule / 2026</span></p>
+
+      <div>
+        <div class="hero-copy">
           <p class="eyebrow">Your real wardrobe, organized</p>
-          <h1>Wear what you already own, better.</h1>
+          <h1>Wear what you already own, <em>better.</em></h1>
           <p>Capsule catalogs the clothes in your closet, builds outfits from the pieces you actually have, and plans what to wear around your calendar and the weather.</p>
           <div class="hero-actions">
-            <a href="register.html" class="btn btn-dark">Take the 2-minute quiz &rarr;</a>
-            <a href="login.html" class="btn">I have an account</a>
+            <a href="register.html" class="btn btn-light">Take the 2-minute quiz &rarr;</a>
+            <a href="login.html" class="btn btn-ghost">I have an account</a>
           </div>
         </div>
-        <div class="hero-art" aria-hidden="true">
-          <div class="card big"></div>
-          <div class="card small"></div>
-        </div>
-      </div>
 
-      <div class="parts">
-        <h2>Three parts, one wardrobe</h2>
-        <div class="parts-grid">
-          <div class="card"></div>
-          <div class="card"></div>
-          <div class="card"></div>
+        <div class="parts">
+          <h2>Three parts, one wardrobe</h2>
+          <div class="parts-grid">
+            <a href="#" class="part">
+              <img class="pos-catalog" src="images/studio-prints.jpg" alt="Printed outfit photos laid out on a white studio floor">
+              <span>Catalog <small>01</small></span>
+            </a>
+            <a href="#" class="part">
+              <img class="pos-rack" src="images/rack-outfits.jpg" alt="Shoes and blazers on a clothing rack">
+              <span>Outfits <small>02</small></span>
+            </a>
+            <a href="#" class="part">
+              <img src="images/styling-hands.jpg" alt="Hands pointing at a laptop beside outfit photos">
+              <span>Plan <small>03</small></span>
+            </a>
+          </div>
         </div>
       </div>
     </section>
 
+    <!-- Right: sign-up form -->
     <section class="panel">
       <div class="panel-inner">
         <div class="tabs">
@@ -76,15 +93,21 @@
           <button type="submit" class="btn btn-dark btn-block">Create account</button>
         </form>
 
-        <div class="divider"><span>or</span></div>
+        <div class="divider">or</div>
 
-        <button type="button" class="btn btn-block btn-social">Continue with Google</button>
-        <button type="button" class="btn btn-block btn-social">Continue with Apple</button>
+        <div class="socials">
+          <button type="button" class="btn btn-social">Continue with Google</button>
+          <button type="button" class="btn btn-social">Continue with Apple</button>
+        </div>
 
-        <p class="legal">By continuing you agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a></p>
+        <p class="legal">By continuing you agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</p>
       </div>
     </section>
   </main>
-  <footer class="footer"></footer>
+
+  <footer class="footer">
+    <span>&copy; 2026 Capsule</span>
+    <span>Your real wardrobe, organized</span>
+  </footer>
 </body>
 </html>
