@@ -7,13 +7,16 @@ CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(30) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    -- bcrypt hash, never plain text 
+    password_hash VARCHAR(255) NULL,
+    -- bcrypt hash, never plain text (NULL for Google-only accounts)
+    google_id VARCHAR(64) UNIQUE NULL,
+    -- Google's permanent user ID, set when someone uses "Continue with Google" 
     first_name VARCHAR(50),
     last_name VARCHAR(50),
     profile_img_url VARCHAR(255),
     bio VARCHAR(255),
     style_pref ENUM(
+        'minimal',
         'casual',
         'business casual',
         'streetwear',
@@ -22,7 +25,10 @@ CREATE TABLE users (
         'minimalist',
         'alt',
         'classic',
-        'sporty'
+        'sporty',
+        'Gothic',
+        'coquette',
+        'y2k'
     ) DEFAULT 'casual',
     city VARCHAR(80),
     -- for weather API lookups 
@@ -58,6 +64,8 @@ CREATE TABLE clothing_items (
     image_url VARCHAR(255) NOT NULL,
     price DECIMAL(8, 2),
     times_worn INT DEFAULT 0,
+    notes TEXT,
+    -- The user's own notes about the piece (fit, care, what to wear it with)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE

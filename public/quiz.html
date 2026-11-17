@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Style quiz · Capsule</title>
+  <!-- Quiz uses Inter + the SemiBold Cormorant italic from the Figma design -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500;1,600&family=Inter:wght@400;500&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="quiz.css">
+</head>
+<body class="quiz-page">
+
+  <!-- ===== Top bar: brand · step counter · skip ===== -->
+  <header class="quiz-top">
+    <a href="register.html" class="brand">Capsule</a>
+    <p class="quiz-step" id="quiz-step">Style quiz · Step 1 of 7</p>
+    <a href="register.html" class="quiz-skip" id="quiz-skip">Skip for now</a>
+  </header>
+
+  <div class="quiz-layout">
+
+    <!-- ===== Left column: question, picks, coming up, nav ===== -->
+    <section class="quiz-side">
+      <!-- Segmented progress (segments drawn by quiz.js) -->
+      <div class="quiz-progress" id="quiz-progress" role="progressbar"
+           aria-valuemin="1" aria-valuemax="7" aria-valuenow="1"></div>
+
+      <p class="quiz-eyebrow" id="quiz-eyebrow">Question 1 of 7</p>
+      <h1 class="quiz-title" id="quiz-title">Which vibes feel <em>like you</em>?</h1>
+      <p class="quiz-sub" id="quiz-sub">Pick as many as you like. This teaches us your taste.</p>
+
+      <div class="quiz-picks-block">
+        <p class="quiz-label">Your picks</p>
+        <div class="quiz-picks" id="quiz-picks"></div>
+      </div>
+
+      <div class="quiz-upcoming-block" id="quiz-upcoming-block">
+        <p class="quiz-label" id="quiz-upcoming-label">Coming up</p>
+        <ol class="quiz-upcoming" id="quiz-upcoming"></ol>
+        <p class="quiz-why" id="quiz-why">
+          <img src="images/quiz/alert-circle.svg" width="15" height="15" alt="">
+          <span id="quiz-why-text"></span>
+        </p>
+      </div>
+
+      <!-- Bottom nav: Back · count · Next -->
+      <nav class="quiz-nav" aria-label="Quiz navigation">
+        <button type="button" class="quiz-btn" id="quiz-back" disabled>Back</button>
+        <p class="quiz-hint" id="quiz-hint" aria-live="polite">Pick at least one to continue</p>
+        <button type="button" class="quiz-btn quiz-btn-next" id="quiz-next" disabled>
+          <span id="quiz-next-label">Next</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </nav>
+    </section>
+
+    <!-- ===== Right column: option cards ===== -->
+    <main class="quiz-main">
+      <p class="quiz-count" id="quiz-count">8 styles · Tap any that fit</p>
+      <div class="quiz-grid" id="quiz-grid"></div>
+      <p class="quiz-caption" id="quiz-caption">Example photos: After sign-up. Capsule styles the clothes you actually own.</p>
+    </main>
+
+  </div>
+
+  <!-- ===== Thank-you pop-up, shown after tapping Finish (filled in by quiz.js) ===== -->
+  <dialog class="quiz-done" id="quiz-done" aria-labelledby="quiz-done-title" aria-describedby="quiz-done-text">
+   <div class="quiz-done-box">
+    <div class="quiz-done-bar" id="quiz-done-bar" aria-hidden="true"></div>
+    <p class="quiz-eyebrow">Style quiz · Complete</p>
+    <h2 class="quiz-done-title" id="quiz-done-title">Thank you!</h2>
+    <p class="quiz-done-text" id="quiz-done-text">Thank you for completing our quiz.</p>
+    <div class="quiz-done-actions">
+      <button type="button" class="quiz-done-back" id="quiz-done-back">Back to my answers</button>
+      <div class="quiz-done-buttons">
+        <!-- Only shown when nobody is logged in -->
+        <a href="login.html" class="quiz-btn quiz-done-btn" id="quiz-done-login" hidden>Log in</a>
+        <a href="/app/closet" class="quiz-btn quiz-btn-next quiz-done-btn" id="quiz-done-go">
+          <span id="quiz-done-go-label">Go to my closet</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+   </div>
+  </dialog>
+
+  <script src="quiz.js"></script>
+</body>
+</html>

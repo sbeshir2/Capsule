@@ -1,3 +1,12 @@
 node_modules/
 .env
 .DS_Store
+
+# React app build output (recreate with: npm run build)
+client/dist/
+
+# Closet photos uploaded by users
+uploads/
+
+# Full-size, uncropped quiz photos (kept on this computer for re-cropping)
+quiz-photo-originals/

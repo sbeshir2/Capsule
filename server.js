@@ -6,17 +6,29 @@
 //   POST /login    -> check credentials and start a session
 //   GET  /profile  -> shows the logged-in user's username (needs a session)
 //   GET  /logout   -> destroys the session and logs the user out
+//   GET  /auth/google          -> sends the user to Google to sign in
+//   GET  /auth/google/callback -> Google sends the user back here
+//   GET  /auth/apple           -> placeholder ("coming soon")
+//   GET  /app/...              -> the signed-in React app (client/, needs a session)
+//   /api/...                   -> data for the React app (closetApi.js)
+//   GET  /uploads/<file>       -> a closet photo (only for the user who owns it)
 //
 // Run:  npm install   then   node server.js
 // Open: http://localhost:3000/register.html
+// React app: run `npm run build` once (and after changing client/), then
+//            log in and open http://localhost:3000/app
 // =====================================================================
 
 require('dotenv').config();                 // loads DB_* and SESSION_SECRET from .env
 const express = require('express');         // web framework
 const session = require('express-session'); // session middleware (stores data per visitor)
 const path = require('path');               // builds file paths that work on any OS
+const fs = require('fs');                   // checks whether the React app has been built
 const bcrypt = require('bcryptjs');         // hashes and checks passwords
 const pool = require('./db');               // MySQL connection pool (db.js)
+const closetApi = require('./closetApi');   // /api routes used by the React app
+const passport = require('passport');       // handles "Sign in with ..." (OAuth) logins
+const GoogleStrategy = require('passport-google-oauth20').Strategy; // Google's OAuth 2.0 login
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -48,6 +60,14 @@ app.use(session({
 // Serve register.html, login.html, styles.css and images from /public
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Passport only handles the trip to Google and back.
+// We still store the logged-in user in req.session.user ourselves,
+// so /profile and /logout work the same for every kind of login.
+app.use(passport.initialize());
+
+// Google login is only switched on when the keys are in .env
+const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+
 // ---------------------------------------------------------------------
 // Helper functions
 // ---------------------------------------------------------------------
@@ -64,7 +84,8 @@ function escapeHtml(str) {
 // otherwise we show "Log in" and "Get started".
 function navBar(user) {
   const links = user
-    ? `<a href="/profile">Profile</a>
+    ? `<a href="/app">My closet</a>
+       <a href="/profile">Profile</a>
        <a href="/logout" class="btn btn-dark">Log out</a>`
     : `<a href="login.html">Log in</a>
        <a href="register.html" class="btn btn-dark">Get started</a>`;
@@ -192,6 +213,11 @@ app.post('/login', async (req, res) => {
     if (rows.length === 0) return failed();
 
     const user = rows[0];
+
+    // Accounts created with "Continue with Google" have no password,
+    // so they can't log in with the username/password form
+    if (!user.password_hash) return failed();
+
     let match;
 
     if (user.password_hash.startsWith('$2')) {
@@ -326,6 +352,173 @@ app.get('/logout', (req, res) => {
       'login.html', 'Back to login', true
     ));
   });
+});
+
+// ---------------------------------------------------------------------
+// Google login (OAuth 2.0)
+// ---------------------------------------------------------------------
+// How it works:
+//   1. The "Continue with Google" button links to /auth/google
+//   2. Passport sends the user to Google's sign-in page
+//   3. Google sends them back to /auth/google/callback with their profile
+//   4. The function below finds or creates the matching row in `users`
+//   5. The callback route saves the user in the session -> /profile
+
+// Turns an email like "sabrina.b@gmail.com" into a free username like "sabrinab"
+async function makeUniqueUsername(email) {
+  const base = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').slice(0, 24) || 'user';
+  let candidate = base;
+  for (let i = 0; i < 20; i++) {
+    const [rows] = await pool.query('SELECT user_id FROM users WHERE username = ?', [candidate]);
+    if (rows.length === 0) return candidate;           // nobody has it yet
+    candidate = base + Math.floor(100 + Math.random() * 900); // try e.g. "sabrinab427"
+  }
+  return base.slice(0, 17) + Date.now();                // last resort, always unique (fits VARCHAR(30))
+}
+
+if (googleEnabled) {
+  passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/callback'
+  }, async (accessToken, refreshToken, profile, done) => {
+    try {
+      // profile.id is Google's permanent ID for this person
+      const googleId = profile.id;
+      const email = (profile.emails && profile.emails[0] && profile.emails[0].value || '').toLowerCase();
+      if (!email) return done(null, false); // we need an email to make an account
+
+      // 1. Have they signed in with Google before?
+      let [rows] = await pool.query(
+        'SELECT user_id, username, email FROM users WHERE google_id = ?', [googleId]
+      );
+
+      // 2. Do they already have a normal Capsule account with the same email?
+      //    If so, link Google to that account instead of making a duplicate.
+      if (rows.length === 0) {
+        [rows] = await pool.query(
+          'SELECT user_id, username, email FROM users WHERE email = ?', [email]
+        );
+        if (rows.length) {
+          await pool.query('UPDATE users SET google_id = ? WHERE user_id = ?', [googleId, rows[0].user_id]);
+        }
+      }
+
+      // 3. Brand-new person: create an account with no password
+      if (rows.length === 0) {
+        const username = await makeUniqueUsername(email);
+        await pool.query(
+          'INSERT INTO users (username, email, google_id, first_name, last_name) VALUES (?, ?, ?, ?, ?)',
+          [username, email, googleId,
+           profile.name ? profile.name.givenName : null,
+           profile.name ? profile.name.familyName : null]
+        );
+        [rows] = await pool.query(
+          'SELECT user_id, username, email FROM users WHERE google_id = ?', [googleId]
+        );
+        console.log('Registered with Google:', username);
+      }
+
+      // Hand the user to the callback route below
+      const u = rows[0];
+      done(null, { id: u.user_id, username: u.username, email: u.email });
+    } catch (err) {
+      done(err);
+    }
+  }));
+}
+
+// Step 1: the button sends the user here, and we send them on to Google.
+// scope = what we ask Google for (basic profile + email address)
+app.get('/auth/google', (req, res, next) => {
+  if (!googleEnabled) {
+    return res.status(503).send(messagePage(
+      'Google sign-in is not set up',
+      'Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to the .env file and restart the server.',
+      'login.html', 'Back to login', false
+    ));
+  }
+  passport.authenticate('google', { scope: ['profile', 'email'], session: false })(req, res, next);
+});
+
+// Step 2: Google sends the user back here after they sign in
+app.get('/auth/google/callback', (req, res, next) => {
+  if (!googleEnabled) return res.redirect('/login.html');
+
+  passport.authenticate('google', { session: false }, (err, user) => {
+    // Something went wrong, or the user pressed "Cancel" on Google's page
+    if (err || !user) {
+      if (err) console.error('Google login error:', err.message);
+      return res.status(401).send(messagePage(
+        'Login failed',
+        'We could not sign you in with Google. Please try again.',
+        'login.html', 'Back to login', false
+      ));
+    }
+
+    // Success: start a fresh session, exactly like the normal login does
+    req.session.regenerate(sessionErr => {
+      if (sessionErr) return next(sessionErr);
+      req.session.user = user;   // { id, username, email }
+      console.log('Logged in with Google:', user.username);
+      res.redirect('/profile');
+    });
+  })(req, res, next);
+});
+
+// Apple sign-in needs a paid Apple Developer account and a real HTTPS
+// domain (it does not work on localhost), so for now it's a placeholder.
+app.get('/auth/apple', (req, res) => {
+  res.send(messagePage(
+    'Apple sign-in coming soon',
+    'Sign in with Apple will be available once Capsule is live. For now, use Google or your username and password.',
+    'login.html', 'Back to login', false
+  ));
+});
+
+// ---------------------------------------------------------------------
+// The signed-in React app (client/)
+// ---------------------------------------------------------------------
+// The React code lives in client/src. `npm run build` turns it into
+// plain files in client/dist, and Express serves those at /app.
+
+// Data routes: /api/me, /api/items ... (see closetApi.js)
+app.use('/api', closetApi.router);
+
+// Closet photos. File names start with "u<user id>-", and a user can
+// only open their own.
+app.get('/uploads/:file', (req, res) => {
+  const user = req.session.user;
+  const match = /^u(\d+)-\d+-[a-f0-9]+\.(?:jpg|png|webp)$/.exec(req.params.file);
+  if (!user || !match || Number(match[1]) !== user.id) return res.sendStatus(404);
+  res.sendFile(req.params.file, { root: closetApi.UPLOAD_DIR, maxAge: '7d' }, err => {
+    if (err && !res.headersSent) res.sendStatus(404);
+  });
+});
+
+const CLIENT_DIST = path.join(__dirname, 'client', 'dist');
+
+// Nobody logged in -> go to the login page instead of the app
+function requireLoginForApp(req, res, next) {
+  if (req.session.user) return next();
+  res.redirect('/login.html');
+}
+
+// The built JavaScript and CSS files
+app.use('/app', requireLoginForApp, express.static(CLIENT_DIST, { index: false }));
+
+// Every other /app address (/app, /app/closet, /app/planner ...) gets the
+// same index.html; React then shows the right screen for the address.
+app.get(['/app', '/app/*'], requireLoginForApp, (req, res) => {
+  const indexFile = path.join(CLIENT_DIST, 'index.html');
+  if (!fs.existsSync(indexFile)) {
+    return res.status(503).send(messagePage(
+      'The app has not been built yet',
+      'In the Capsule folder, run "npm run setup" once and then "npm run build". Then reload this page.',
+      '/profile', 'Back to profile', false, req.session.user
+    ));
+  }
+  res.sendFile(indexFile);
 });
 
 // ---------------------------------------------------------------------
