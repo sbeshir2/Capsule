@@ -67,6 +67,30 @@
 
   </div>
 
+  <!-- ===== Thank-you pop-up, shown after tapping Finish (filled in by quiz.js) ===== -->
+  <dialog class="quiz-done" id="quiz-done" aria-labelledby="quiz-done-title" aria-describedby="quiz-done-text">
+   <div class="quiz-done-box">
+    <div class="quiz-done-bar" id="quiz-done-bar" aria-hidden="true"></div>
+    <p class="quiz-eyebrow">Style quiz · Complete</p>
+    <h2 class="quiz-done-title" id="quiz-done-title">Thank you!</h2>
+    <p class="quiz-done-text" id="quiz-done-text">Thank you for completing our quiz.</p>
+    <div class="quiz-done-actions">
+      <button type="button" class="quiz-done-back" id="quiz-done-back">Back to my answers</button>
+      <div class="quiz-done-buttons">
+        <!-- Only shown when nobody is logged in -->
+        <a href="login.html" class="quiz-btn quiz-done-btn" id="quiz-done-login" hidden>Log in</a>
+        <a href="/app/closet" class="quiz-btn quiz-btn-next quiz-done-btn" id="quiz-done-go">
+          <span id="quiz-done-go-label">Go to my closet</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+   </div>
+  </dialog>
+
   <script src="quiz.js"></script>
 </body>
 </html>

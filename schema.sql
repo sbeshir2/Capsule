@@ -64,6 +64,8 @@ CREATE TABLE clothing_items (
     image_url VARCHAR(255) NOT NULL,
     price DECIMAL(8, 2),
     times_worn INT DEFAULT 0,
+    notes TEXT,
+    -- The user's own notes about the piece (fit, care, what to wear it with)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE

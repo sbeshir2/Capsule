@@ -1,9 +1,16 @@
 // ItemForm.jsx - the pop-up used for both "+ Add item" and "Edit".
 // `item` is the piece being edited, or null when adding a new one.
 // When the save works it calls onSaved(savedItem); onClose closes it.
-import { useEffect, useRef, useState } from 'react';
+//
+// It must sit inside a Radix <Dialog.Root> (see Closet.jsx). Radix handles
+// Esc, clicking outside, keeping Tab inside the pop-up and screen-reader
+// labels; Motion fades the backdrop and lifts the form in and out.
+import { useRef, useState } from 'react';
+import { Dialog } from 'radix-ui';
+import { motion } from 'motion/react';
 import { addItem, updateItem } from '../api.js';
-import { CATEGORIES, SEASONS, COLORS, categoryOf } from '../closetOptions.js';
+import { CATEGORIES, SEASONS, COLORS, categoryOf, colorHex } from '../closetOptions.js';
+import Picker from './Picker.jsx';
 
 const MAX_PHOTO_SIDE = 1200; // photos are shrunk to this many pixels before upload
 
@@ -47,16 +54,6 @@ export default function ItemForm({ item, onSaved, onClose }) {
   const [saving, setSaving] = useState(false);
 
   const firstField = useRef(null);
-
-  // Put the cursor in the first field when the pop-up opens
-  useEffect(() => { firstField.current?.focus(); }, []);
-
-  // Let Escape close the pop-up
-  useEffect(() => {
-    const onKey = e => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
 
   async function choosePhoto(e) {
     const file = e.target.files[0];
@@ -103,13 +100,24 @@ export default function ItemForm({ item, onSaved, onClose }) {
   if (color && !colorNames.includes(color)) colorNames.push(color);
 
   return (
-    // Clicking the dark area outside the form closes it
-    <div className="modal-back" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <form className="modal" onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="item-form-title">
+    // forceMount keeps it on screen while Motion plays the closing animation
+    <Dialog.Portal forceMount>
+      <Dialog.Overlay asChild forceMount>
+        <motion.div className="modal-back"
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}>
+      <Dialog.Content asChild forceMount aria-describedby={undefined}
+                      // start in the Name box rather than on the photo picker
+                      onOpenAutoFocus={e => { e.preventDefault(); firstField.current?.focus(); }}>
+      <motion.form className="modal" onSubmit={submit}
+                   initial={{ opacity: 0, y: 28, scale: 0.98 }}
+                   animate={{ opacity: 1, y: 0, scale: 1 }}
+                   exit={{ opacity: 0, y: 16, scale: 0.98, transition: { duration: 0.15 } }}
+                   transition={{ type: 'spring', stiffness: 420, damping: 34 }}>
         <p className="eyebrow">{editing ? 'Edit piece' : 'New piece'}</p>
-        <h2 className="modal-title" id="item-form-title">
+        <Dialog.Title className="modal-title">
           {editing ? item.name : <>Add to <em>the closet</em></>}
-        </h2>
+        </Dialog.Title>
 
         <div className="form-grid">
           <label className="form-photo">
@@ -137,28 +145,17 @@ export default function ItemForm({ item, onSaved, onClose }) {
             </label>
 
             <div className="form-row">
-              <label>
-                <span className="form-label">Category</span>
-                <select value={category} onChange={e => setCategory(e.target.value)}>
-                  {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.card}</option>)}
-                </select>
-              </label>
-              <label>
-                <span className="form-label">Season</span>
-                <select value={season} onChange={e => setSeason(e.target.value)}>
-                  {SEASONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                </select>
-              </label>
+              <Picker label="Category" className="form-pick" labelClassName="form-label"
+                      value={category} onChange={setCategory}
+                      options={CATEGORIES.map(c => ({ value: c.value, label: c.card }))} />
+              <Picker label="Season" className="form-pick" labelClassName="form-label"
+                      value={season} onChange={setSeason} options={SEASONS} />
             </div>
 
             <div className="form-row">
-              <label>
-                <span className="form-label">Color</span>
-                <select value={color} onChange={e => setColor(e.target.value)}>
-                  <option value="">Choose a color</option>
-                  {colorNames.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </label>
+              <Picker label="Color" className="form-pick" labelClassName="form-label"
+                      value={color} onChange={setColor} placeholder="Choose a color"
+                      options={colorNames.map(c => ({ value: c, label: c, swatch: colorHex(c) }))} />
               <label>
                 <span className="form-label">Price paid ($)</span>
                 <input type="number" min="0" step="0.01" value={price}
@@ -183,7 +180,10 @@ export default function ItemForm({ item, onSaved, onClose }) {
             {saving ? 'Saving…' : editing ? 'Save changes' : 'Add to closet'}
           </button>
         </div>
-      </form>
-    </div>
+      </motion.form>
+      </Dialog.Content>
+        </motion.div>
+      </Dialog.Overlay>
+    </Dialog.Portal>
   );
 }

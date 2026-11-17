@@ -7,6 +7,7 @@
 //   POST   /api/items       -> add a piece (with a photo)
 //   PUT    /api/items/:id   -> change a piece (photo optional)
 //   DELETE /api/items/:id   -> remove a piece and its photo
+//   PATCH  /api/items/:id/notes -> save just the piece's notes
 //
 // Photos arrive as text ("data:image/jpeg;base64,...") inside the JSON,
 // are saved as files in /uploads, and the database keeps only the path.
@@ -24,8 +25,28 @@ const UPLOAD_DIR = path.join(__dirname, 'uploads');
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;   // 5 MB after decoding
 const CATEGORIES = ['tops', 'bottoms', 'dress', 'coats', 'outerwear', 'shoes', 'accessories'];
 const SEASONS = ['all', 'fw', 'ss'];        // all seasons / fall-winter / spring-summer
+const MAX_NOTES = 2000;                     // characters
 const ITEM_COLUMNS =
-  'item_id, name, category, color, brand, season, image_url, price, times_worn, created_at';
+  'item_id, name, category, color, brand, season, image_url, price, times_worn, notes, created_at';
+
+// ---------------------------------------------------------------------
+// Database upgrade: the "notes" column
+// ---------------------------------------------------------------------
+// Databases made from an older schema.sql don't have clothing_items.notes
+// yet. This adds it once, the first time the server starts, so nobody has
+// to run anything by hand. Routes wait for it before touching the table.
+const notesColumnReady = (async () => {
+  const [rows] = await pool.query(
+    `SELECT 1 FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clothing_items' AND COLUMN_NAME = 'notes'`
+  );
+  if (rows.length === 0) {
+    await pool.query('ALTER TABLE clothing_items ADD COLUMN notes TEXT NULL AFTER times_worn');
+    console.log('Database: added the "notes" column to clothing_items');
+  }
+})();
+// Log a failure here; the routes report it to the user when they run
+notesColumnReady.catch(err => console.error('Could not add the notes column:', err.message));
 
 // Read JSON bodies (photos make them bigger than Express's 100kb default)
 router.use(express.json({ limit: '8mb' }));
@@ -35,6 +56,12 @@ router.use(express.json({ limit: '8mb' }));
 router.use((req, res, next) => {
   if (req.session.user) return next();
   res.status(401).json({ error: 'Please log in.' });
+});
+
+// Make sure the notes column exists before any closet query runs
+router.use((req, res, next) => {
+  notesColumnReady.then(() => next(), () =>
+    res.status(500).json({ error: 'The closet database needs updating. Check the server log.' }));
 });
 
 // ---------------------------------------------------------------------
@@ -202,6 +229,26 @@ router.put('/items/:id', safe(async (req, res) => {
   }
 
   if (imageUrl !== existing.image_url) await removePhoto(existing.image_url); // old photo
+  res.json(await findItem(userId, existing.item_id));
+}));
+
+// Notes are saved on their own, so writing a note never touches the photo
+// or the other details. An empty note is stored as NULL.
+router.patch('/items/:id/notes', safe(async (req, res) => {
+  const userId = req.session.user.id;
+  const existing = await findItem(userId, req.params.id);
+  if (!existing) return res.status(404).json({ error: 'That piece is no longer in your closet.' });
+
+  if (req.body.notes != null && typeof req.body.notes !== 'string') {
+    return res.status(400).json({ error: 'Notes must be text.' });
+  }
+  const notes = (req.body.notes || '').trim();
+  if (notes.length > MAX_NOTES) {
+    return res.status(400).json({ error: `Notes can be up to ${MAX_NOTES} characters.` });
+  }
+
+  await pool.query('UPDATE clothing_items SET notes = ? WHERE item_id = ? AND user_id = ?',
+    [notes || null, existing.item_id, userId]);
   res.json(await findItem(userId, existing.item_id));
 }));
 

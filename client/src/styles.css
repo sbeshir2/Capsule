@@ -10,7 +10,12 @@
   --soft: #d6d6d6;
   --serif: "Cormorant Garamond", Georgia, serif;
   --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --side: 46px;               /* left/right page margin */
+  /* left/right page margin: grows with the screen, 24px on small, up to 88px */
+  --side: clamp(24px, 5vw, 88px);
+  /* the page content stops getting wider after this, and sits in the middle */
+  --page-max: 1440px;
+  /* padding that lines the top bar and footer up with the page content */
+  --edge: max(var(--side), calc((100% - var(--page-max)) / 2 + var(--side)));
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -30,23 +35,23 @@ button, input, select { font: inherit; color: inherit; }
 .app-main {
   flex: 1;
   width: 100%;
-  max-width: 1728px;
+  max-width: var(--page-max);
   margin: 0 auto;
-  padding: 0 var(--side) 72px;
+  padding: 0 var(--side) 80px;
 }
 
 /* ---------- Shared bits ---------- */
 .eyebrow {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .page-title {
   font-family: var(--serif);
   font-weight: 500;
-  font-size: clamp(44px, 4.2vw, 72px);
-  line-height: 1.15;
+  font-size: clamp(38px, 3.4vw, 54px);
+  line-height: 1.1;
 }
 .page-title em { font-style: italic; }
 
@@ -54,11 +59,11 @@ button, input, select { font: inherit; color: inherit; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 46px;
-  padding: 0 22px;
-  border: 2px solid var(--ink);
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1.5px solid var(--ink);
   background: var(--paper);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -75,31 +80,31 @@ button, input, select { font: inherit; color: inherit; }
 
 /* ---------- Top bar ---------- */
 .topbar {
-  height: 96px;
+  height: 72px;
   display: flex;
   align-items: center;
   gap: 40px;
-  padding: 0 var(--side);
+  padding: 0 var(--edge);
   border-bottom: 1px solid var(--ink);
 }
 .topbar-brand {
   font-family: var(--serif);
   font-style: italic;
   font-weight: 500;
-  font-size: 40px;
+  font-size: 32px;
   text-decoration: none;
   flex-shrink: 0;
 }
 .topbar-links {
   flex: 1;
   display: flex;
-  justify-content: space-evenly;
-  gap: 24px;
+  justify-content: center;
+  gap: clamp(20px, 3vw, 44px);
 }
 .topbar-links a {
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   text-decoration: none;
   white-space: nowrap;
@@ -111,30 +116,36 @@ button, input, select { font: inherit; color: inherit; }
 .topbar-brand:focus-visible,
 .topbar-avatar:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
 .topbar-avatar {
-  width: 60px;
-  height: 60px;
+  width: 42px;
+  height: 42px;
   flex-shrink: 0;
   display: grid;
   place-items: center;
   border: 1px solid var(--ink);
   border-radius: 50%;
-  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
   font-family: var(--serif);
   font-style: italic;
   font-weight: 500;
-  font-size: 34px;
+  font-size: 24px;
   line-height: 1;
   text-decoration: none;
+  background: var(--paper);
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
+.topbar-avatar:hover { background: #f2f2f2; }
+.topbar-avatar[data-state="open"] { background: var(--ink); color: var(--paper); }
 
 /* ---------- Footer ---------- */
 .app-foot {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px var(--side);
+  padding: 16px var(--edge);
   border-top: 1px solid var(--ink);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -146,112 +157,200 @@ button, input, select { font: inherit; color: inherit; }
   justify-content: space-between;
   align-items: flex-end;
   gap: 24px;
-  padding-top: 76px;
+  padding-top: 56px;
 }
-.closet-head .page-title { margin-top: 10px; }
+.closet-head .page-title { margin-top: 6px; }
 .btn-add {
-  min-height: 72px;
-  padding: 0 40px;
-  font-size: 19px;
-  letter-spacing: 0.02em;
+  min-height: 48px;
+  padding: 0 28px;
+  font-size: 13px;
+  letter-spacing: 0.1em;
   white-space: nowrap;
 }
 
 /* ---------- The Closet: filter box ---------- */
 .filters {
-  margin-top: 40px;
-  padding: 32px 62px 46px;
-  border: 2px solid var(--ink);
+  margin-top: 32px;
+  padding: 24px 32px 28px;
+  border: 1.5px solid var(--ink);
 }
 .filters-row {
   display: grid;
-  grid-template-columns: 1.2fr repeat(4, 1fr);
-  gap: 40px;
+  grid-template-columns: 1.3fr repeat(4, 1fr);
+  gap: 32px;
 }
 .filter { display: block; min-width: 0; }
 .filter-label,
 .form-label {
   display: block;
-  font-size: 15px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .filter input,
-.filter select,
 .form-fields input,
-.form-fields select {
+.picker-trigger {
   width: 100%;
-  margin-top: 14px;
+  margin-top: 8px;
   padding: 6px 0 8px;
   border: 0;
   border-bottom: 1px solid var(--ink);
   border-radius: 0;
   background: transparent;
-  font-size: 19px;
-}
-.filter select,
-.form-fields select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 24px;
-  cursor: pointer;
-  /* small down arrow on the right */
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%230e0e0e' stroke-width='1.8'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E") right 4px center no-repeat;
+  font-size: 15px;
 }
 .filter input::placeholder,
 .form-fields input::placeholder { color: var(--mute); }
 .filter input:focus-visible,
-.filter select:focus-visible,
 .form-fields input:focus-visible,
-.form-fields select:focus-visible {
+.picker-trigger:focus-visible {
   outline: none;
   border-bottom-width: 2px;
   padding-bottom: 7px;
 }
 
+/* ---------- Dropdowns (Radix Select, see Picker.jsx) ---------- */
+/* The closed box looks like the underlined fields around it */
+.picker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+.picker-trigger > span:first-child,
+.picker-item > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.picker-trigger[data-placeholder] { color: var(--mute); }
+.picker-arrow { display: flex; flex-shrink: 0; margin-right: 4px; transition: transform 0.2s; }
+.picker-trigger[data-state="open"] .picker-arrow { transform: rotate(180deg); }
+.form-pick { min-width: 0; }
+
+/* The open list, and the account menu under the profile circle */
+.picker-menu,
+.account-menu {
+  z-index: 40;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+  transform-origin: var(--radix-select-content-transform-origin, var(--radix-dropdown-menu-content-transform-origin));
+}
+.picker-menu {
+  min-width: var(--radix-select-trigger-width);
+  max-height: min(360px, var(--radix-select-content-available-height));
+}
+.picker-menu[data-state="open"],
+.account-menu[data-state="open"] { animation: menu-in 0.16s ease-out; }
+@keyframes menu-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+.picker-list { padding: 4px 0; }
+.picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+}
+.picker-item[data-highlighted] { background: var(--ink); color: var(--paper); }
+.picker-item[data-state="checked"] { font-weight: 600; }
+.picker-tick { display: flex; flex-shrink: 0; }
+
+.account-menu { min-width: 220px; padding: 4px 0; }
+.account-name {
+  padding: 10px 16px 12px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.account-name strong {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 24px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+.account-item {
+  display: block;
+  padding: 11px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  outline: none;
+  cursor: pointer;
+}
+.account-item[data-highlighted] { background: var(--ink); color: var(--paper); }
+.account-line { height: 1px; margin: 4px 0; background: var(--soft); }
+
 .tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 40px;
+  gap: 8px;
+  margin-top: 26px;
 }
 .tab {
-  min-height: 58px;
-  min-width: 172px;
-  padding: 0 26px;
-  border: 2px solid var(--ink);
+  position: relative;
+  min-height: 38px;
+  padding: 0 18px;
+  border: 1.5px solid var(--ink);
   background: var(--paper);
-  font-size: 19px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
+  transition: color 0.2s;
 }
 .tab:hover { background: #f2f2f2; }
 .tab:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
-.tab-count { color: var(--mute); font-weight: 600; }
-.tab.is-on { background: var(--ink); color: var(--paper); }
-.tab.is-on .tab-count { color: #b5b5b5; }
+.tab-count { color: var(--mute); font-weight: 600; transition: color 0.2s; }
+/* The chosen category: white text over the black block (.tab-ink),
+   which Motion slides from button to button */
+.tab[data-state="on"] { color: var(--paper); }
+.tab[data-state="on"] .tab-count { color: #b5b5b5; }
+.tab-ink { position: absolute; inset: 0; background: var(--ink); }
+.tab-text { position: relative; }
 
 /* ---------- The Closet: grid of pieces ---------- */
 .closet-grid {
-  margin-top: 40px;
+  position: relative; /* lets cards that are leaving fade out in place */
+  margin-top: 32px;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 22px 36px;
+  gap: 28px 24px;
 }
 .item-card {
   display: flex;
   flex-direction: column;
-  padding: 8px 16px 10px;
-  border: 2px solid var(--ink);
+  padding: 8px 10px 10px;
+  border: 1.5px solid var(--ink);
   min-width: 0;
 }
 .item-photo {
   position: relative;
   aspect-ratio: 268 / 312;
-  border: 1.5px solid var(--ink);
+  border: 1px solid var(--ink);
   background: #ececec;
   overflow: hidden;
 }
@@ -260,37 +359,138 @@ button, input, select { font: inherit; color: inherit; }
   height: 100%;
   max-width: none;
   object-fit: cover;
+  transition: transform 0.35s ease;
 }
+/* Same gentle zoom as the quiz cards */
+.item-card:hover .item-photo img { transform: scale(1.03); }
 .item-season {
   position: absolute;
-  top: 3px;
+  top: 6px;
   left: 6px;
-  padding: 6px 10px;
-  border: 1.5px solid var(--ink);
+  padding: 5px 8px;
+  border: 1px solid var(--ink);
   background: var(--paper);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-.item-name {
-  margin-top: 4px;
+/* ---------- Notes icon on each photo + its pop-up (NotesButton.jsx) ---------- */
+.note-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.note-btn:hover { background: #f2f2f2; }
+.note-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* filled black = this piece has notes */
+.note-btn.has-notes,
+.note-btn[data-state="open"] { background: var(--ink); color: var(--paper); }
+
+.note-pop {
+  position: relative;
+  z-index: 40;
+  width: min(300px, calc(100vw - 24px));
+  padding: 16px 16px 14px;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+  transform-origin: var(--radix-popover-content-transform-origin);
+}
+.note-pop[data-state="open"] { animation: menu-in 0.16s ease-out; }
+.note-arrow { fill: var(--ink); }
+.note-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.note-title {
+  margin-top: 2px;
+  padding-right: 28px;          /* room for the × */
   font-family: var(--serif);
   font-style: italic;
   font-weight: 500;
-  font-size: clamp(22px, 1.75vw, 30px);
+  font-size: 22px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.note-text {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: var(--paper);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 110px;
+  max-height: 320px;
+}
+.note-text::placeholder { color: var(--mute); }
+.note-text:focus-visible { outline: none; border-width: 2px; padding: 9px; }
+.note-error {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #8a1414;
+}
+.note-foot {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.note-count { font-size: 11px; color: var(--mute); }
+.note-done { min-height: 34px; padding: 0 16px; font-size: 11px; }
+.note-x {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--soft);
+  background: var(--paper);
+  cursor: pointer;
+}
+.note-x:hover { border-color: var(--ink); }
+.note-x:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.item-name {
+  margin-top: 8px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(19px, 1.45vw, 23px);
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
 .item-meta {
   margin-top: 2px;
-  font-size: 13px;
-  letter-spacing: 0.02em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--mute);
 }
 .item-color,
-.item-stats { margin-top: 3px; font-size: 12px; }
+.item-stats { margin-top: 3px; font-size: 11px; }
 .item-color { display: flex; align-items: center; gap: 5px; color: #555; }
 .item-dot {
   width: 11px;
@@ -304,25 +504,25 @@ button, input, select { font: inherit; color: inherit; }
   padding-top: 12px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
 }
-.item-actions .btn { padding: 0 6px; }
+.item-actions .btn { min-height: 34px; padding: 0 6px; font-size: 11px; }
 
 /* Messages in place of the grid */
-.closet-note { margin-top: 48px; font-size: 16px; color: var(--mute); }
+.closet-note { margin-top: 40px; font-size: 14px; color: var(--mute); }
 .closet-empty {
-  margin-top: 40px;
-  padding: 72px 24px;
-  border: 2px dashed var(--ink);
+  margin-top: 32px;
+  padding: 56px 24px;
+  border: 1.5px dashed var(--ink);
   text-align: center;
 }
 .closet-empty h2 {
   font-family: var(--serif);
   font-style: italic;
   font-weight: 500;
-  font-size: 40px;
+  font-size: 32px;
 }
-.closet-empty p { margin: 8px 0 24px; font-size: 16px; color: #555; }
+.closet-empty p { margin: 6px 0 20px; font-size: 14px; color: #555; }
 
 /* ---------- Add / edit pop-up ---------- */
 .modal-back {
@@ -336,37 +536,37 @@ button, input, select { font: inherit; color: inherit; }
   overflow-y: auto;
 }
 .modal {
-  width: min(860px, 100%);
-  padding: 36px 40px 32px;
-  border: 2px solid var(--ink);
+  width: min(720px, 100%);
+  padding: 32px 36px 28px;
+  border: 1.5px solid var(--ink);
   background: var(--paper);
 }
 .modal-title {
-  margin-top: 6px;
+  margin-top: 4px;
   font-family: var(--serif);
   font-weight: 500;
-  font-size: 44px;
+  font-size: 34px;
   line-height: 1.15;
 }
 .modal-title em { font-style: italic; }
 .form-grid {
-  margin-top: 28px;
+  margin-top: 24px;
   display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 40px;
+  grid-template-columns: 200px 1fr;
+  gap: 32px;
 }
 .form-photo { display: block; cursor: pointer; }
 .form-photo-box {
   display: grid;
   place-items: center;
-  margin-top: 14px;
+  margin-top: 8px;
   aspect-ratio: 268 / 312;
-  border: 1.5px solid var(--ink);
+  border: 1px solid var(--ink);
   background: #f4f4f4;
   overflow: hidden;
 }
 .form-photo-box img { width: 100%; height: 100%; max-width: none; object-fit: cover; }
-.form-photo-empty { font-size: 14px; color: var(--mute); }
+.form-photo-empty { font-size: 13px; color: var(--mute); }
 /* The real file input is hidden; the whole photo box is the button */
 .form-photo input {
   position: absolute;
@@ -378,56 +578,106 @@ button, input, select { font: inherit; color: inherit; }
 .form-photo-hint {
   display: block;
   margin-top: 8px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.form-fields { display: grid; gap: 22px; align-content: start; }
+.form-fields { display: grid; gap: 18px; align-content: start; }
 .form-fields label { display: block; min-width: 0; }
-.form-fields input,
-.form-fields select { margin-top: 8px; }
-.form-label { font-size: 13px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
-.form-narrow { max-width: 160px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.form-narrow { max-width: 140px; }
 .form-error {
-  margin-top: 20px;
-  padding: 10px 14px;
-  border: 1.5px solid #a82020;
+  margin-top: 18px;
+  padding: 9px 12px;
+  border: 1px solid #a82020;
   color: #8a1414;
-  font-size: 14px;
+  font-size: 13px;
 }
 .modal-actions {
-  margin-top: 28px;
+  margin-top: 24px;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
 }
 
+/* ---------- Short messages (Radix Toast) ---------- */
+.toast-spot {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(440px, 100vw);
+  margin: 0;
+  padding: 24px;
+  list-style: none;
+  outline: none;
+  pointer-events: none; /* the empty corner never blocks clicks */
+}
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 14px 14px 18px;
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+}
+.toast-text { font-size: 14px; font-weight: 500; letter-spacing: 0.02em; }
+.toast-close {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: transparent;
+  color: var(--paper);
+  cursor: pointer;
+}
+.toast-close:hover { border-color: var(--paper); }
+.toast-close:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
+.toast[data-state="open"] { animation: toast-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.toast[data-state="closed"] { animation: toast-out 0.18s ease-in forwards; }
+.toast[data-swipe="move"] { transform: translateX(var(--radix-toast-swipe-move-x)); }
+.toast[data-swipe="cancel"] { transform: translateX(0); transition: transform 0.2s ease-out; }
+.toast[data-swipe="end"] { animation: toast-swipe 0.18s ease-out forwards; }
+@keyframes toast-in    { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes toast-out   { from { opacity: 1; } to { opacity: 0; } }
+@keyframes toast-swipe { from { transform: translateX(var(--radix-toast-swipe-end-x)); } to { transform: translateX(110%); } }
+
+/* Turn the CSS animations off for people who ask for less motion
+   (the Motion ones are switched off in App.jsx) */
+@media (prefers-reduced-motion: reduce) {
+  .picker-menu, .account-menu, .toast, .note-pop { animation: none !important; }
+  .item-photo img, .tab, .tab-count, .picker-arrow { transition: none; }
+}
+
 /* ---------- Screens that aren't built yet ---------- */
-.soon { padding-top: 96px; max-width: 640px; }
-.soon .page-title { margin-top: 10px; font-style: italic; }
-.soon-text { margin: 12px 0 32px; font-size: 18px; color: #555; }
+.soon { padding-top: 64px; max-width: 560px; }
+.soon .page-title { margin-top: 6px; font-style: italic; }
+.soon-text { margin: 10px 0 26px; font-size: 15px; color: #555; }
 
 /* ---------- Smaller screens ---------- */
-@media (max-width: 1400px) {
-  .closet-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 24px; }
-  .filters { padding: 28px 36px 36px; }
-  .filters-row { gap: 28px; }
-  .tab { min-width: 0; font-size: 16px; min-height: 50px; padding: 0 20px; }
-  .topbar-links a { font-size: 14px; }
+@media (max-width: 1200px) {
+  .closet-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px 20px; }
+  .filters-row { gap: 24px; }
 }
 
 @media (max-width: 1100px) {
-  :root { --side: 24px; }
   .closet-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .filters-row { grid-template-columns: repeat(3, 1fr); }
   .filter-search { grid-column: 1 / -1; }
   .topbar { height: auto; flex-wrap: wrap; padding-top: 14px; padding-bottom: 12px; gap: 12px 24px; }
-  .topbar-brand { font-size: 34px; }
-  .topbar-avatar { width: 46px; height: 46px; font-size: 26px; margin-left: auto; }
+  .topbar-brand { font-size: 30px; }
+  .topbar-avatar { width: 40px; height: 40px; font-size: 22px; margin-left: auto; }
   /* The links drop to their own row and can be swiped sideways */
   .topbar-links {
     order: 3;
@@ -436,23 +686,24 @@ button, input, select { font: inherit; color: inherit; }
     gap: 28px;
     overflow-x: auto;
   }
-  .btn-add { min-height: 56px; padding: 0 26px; font-size: 16px; }
 }
 
 @media (max-width: 700px) {
-  :root { --side: 16px; }
-  .closet-head { flex-direction: column; align-items: stretch; padding-top: 40px; }
+  :root { --side: 18px; }
+  .closet-head { flex-direction: column; align-items: stretch; padding-top: 36px; }
   .closet-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   .item-card { padding: 6px 8px 8px; }
   .item-actions { grid-template-columns: 1fr; gap: 6px; }
-  .filters { padding: 20px 16px 24px; margin-top: 28px; }
+  .filters { padding: 18px 16px 22px; margin-top: 24px; }
   .filters-row { grid-template-columns: 1fr 1fr; gap: 20px; }
-  .filter input, .filter select { font-size: 16px; }
-  .filter-label { font-size: 13px; }
-  .tabs { gap: 8px; margin-top: 28px; }
-  .tab { font-size: 13px; min-height: 44px; padding: 0 14px; }
+  /* 16px stops iPhones zooming in when you tap a field */
+  .filter input, .filter .picker-trigger,
+  .form-fields input, .form-fields .picker-trigger { font-size: 16px; }
+  .toast-spot { padding: 16px; }
+  .tabs { gap: 6px; margin-top: 22px; }
+  .tab { padding: 0 12px; }
   .modal { padding: 24px 18px; }
-  .modal-title { font-size: 34px; }
+  .modal-title { font-size: 30px; }
   .form-grid { grid-template-columns: 1fr; gap: 24px; }
   .form-photo-box { max-width: 220px; }
   .form-row { grid-template-columns: 1fr; gap: 22px; }

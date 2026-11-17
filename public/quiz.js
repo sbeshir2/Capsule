@@ -151,8 +151,9 @@ const QUESTIONS = [
   }
 ];
 
-// Where to go after the last question (and after "Skip for now")
-const FINISH_URL = 'register.html';
+// Where the thank-you pop-up sends people after the last question
+const CLOSET_URL = '/app/closet';   // logged in
+const SIGNUP_URL = 'register.html'; // not logged in yet
 const STORAGE_KEY = 'capsule.quiz';
 const OTHER = '__other';      // value saved when "Something else" is picked
 const UPCOMING_MAX = 4;       // rows shown under "Coming up"
@@ -422,14 +423,72 @@ function goBack() {
   }
 }
 
+// ---------------------------------------------------------------------
+// Thank-you pop-up
+// ---------------------------------------------------------------------
+// Ask the server who is logged in as soon as the page opens, so the name
+// is ready by the time Finish is tapped. /api/me answers 401 when nobody
+// is logged in, which gives null here.
+const whoIsLoggedIn = fetch('/api/me', { credentials: 'same-origin' })
+  .then(res => (res.ok ? res.json() : null))
+  .catch(() => null);
+
+const done = {
+  dialog: $('quiz-done'), bar: $('quiz-done-bar'),
+  title: $('quiz-done-title'), text: $('quiz-done-text'),
+  back: $('quiz-done-back'), login: $('quiz-done-login'),
+  go: $('quiz-done-go'), goLabel: $('quiz-done-go-label')
+};
+
+// "sabrina" -> "sabrina’s"
+const possessive = name => `${name}’s`;
+
+async function showThankYou() {
+  const user = await whoIsLoggedIn;
+  const name = user && user.username;
+
+  // A full progress bar: every question answered
+  done.bar.innerHTML = QUESTIONS.map(() => '<span></span>').join('');
+
+  // textContent (not innerHTML) so a username can never inject HTML
+  if (name) {
+    done.title.innerHTML = 'Thank you, <em></em>';
+    done.title.querySelector('em').textContent = name;
+    done.text.textContent =
+      `Thank you for completing our quiz. Click the button below to go to ${possessive(name)} closet.`;
+    done.goLabel.textContent = `Go to ${possessive(name)} closet`;
+    done.go.href = CLOSET_URL;
+    done.login.hidden = true;
+  } else {
+    // Not logged in yet: the closet needs an account, so offer sign-up / log in
+    done.title.innerHTML = 'Thank <em>you!</em>';
+    done.text.textContent =
+      'Thank you for completing our quiz. Create your account (or log in) to go to your closet.';
+    done.goLabel.textContent = 'Create account';
+    done.go.href = SIGNUP_URL;
+    done.login.hidden = false;
+  }
+
+  // showModal() dims the page, keeps Tab inside the pop-up and lets Esc close it
+  if (typeof done.dialog.showModal === 'function') {
+    done.dialog.showModal();
+    done.go.focus();
+  } else {
+    window.location.href = done.go.href; // very old browsers: just go there
+  }
+}
+
+done.back.addEventListener('click', () => done.dialog.close());
+// Clicking the dimmed area outside the box also closes it
+done.dialog.addEventListener('click', e => { if (e.target === done.dialog) done.dialog.close(); });
+
 // Called after the last question.
-// For now the answers stay in sessionStorage and we send the user to
-// sign up. TODO: once there is a POST /quiz route, send state.answers
-// (and state.other) to the server, or include them with the /register form.
+// For now the answers stay in sessionStorage. TODO: once there is a
+// POST /quiz route, send state.answers (and state.other) to the server.
 function finish() {
   state.done = true;
   saveState();
-  window.location.href = FINISH_URL;
+  showThankYou();
 }
 
 el.next.addEventListener('click', goNext);

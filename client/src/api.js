@@ -35,3 +35,6 @@ export const updateItem = (id, item) =>
   request(`/api/items/${id}`, { method: 'PUT', body: JSON.stringify(item) });
 export const deleteItem = id =>
   request(`/api/items/${id}`, { method: 'DELETE' });
+// Only the piece's notes - the rest of the piece stays as it is
+export const saveNotes = (id, notes) =>
+  request(`/api/items/${id}/notes`, { method: 'PATCH', body: JSON.stringify({ notes }) });

@@ -1,10 +1,23 @@
 // ItemCard.jsx - one piece of clothing in the closet grid.
 // Shows the photo, season tag, name, brand · category, color and wear
 // stats, with Edit and Delete buttons. Delete asks "are you sure" first.
+//
+// The card is a Motion element: `layout` makes it glide to its new spot
+// when the grid is filtered or sorted, and initial/animate/exit fade it
+// in and out. `ref` is passed in by <AnimatePresence> in Closet.jsx.
 import { useState } from 'react';
+import { motion } from 'motion/react';
 import { categoryLabel, seasonLabel, colorHex, costPerWear, money } from '../closetOptions.js';
+import NotesButton from './NotesButton.jsx';
 
-export default function ItemCard({ item, onEdit, onDelete }) {
+const appear = {
+  initial: { opacity: 0, scale: 0.96 },
+  animate: { opacity: 1, scale: 1 },
+  exit:    { opacity: 0, scale: 0.96, transition: { duration: 0.15 } },
+  transition: { type: 'spring', stiffness: 380, damping: 34 }
+};
+
+export default function ItemCard({ item, onEdit, onDelete, onSaveNotes, ref }) {
   const [confirming, setConfirming] = useState(false); // showing "Delete this piece?"
   const [busy, setBusy] = useState(false);             // delete request in progress
 
@@ -25,10 +38,11 @@ export default function ItemCard({ item, onEdit, onDelete }) {
   }
 
   return (
-    <article className="item-card">
+    <motion.article ref={ref} layout className="item-card" {...appear}>
       <div className="item-photo">
         <img src={item.image_url} alt="" loading="lazy" />
         <span className="item-season">{seasonLabel(item.season)}</span>
+        <NotesButton item={item} onSave={onSaveNotes} />
       </div>
 
       <h2 className="item-name">{item.name}</h2>
@@ -64,6 +78,6 @@ export default function ItemCard({ item, onEdit, onDelete }) {
           </button>
         </div>
       )}
-    </article>
+    </motion.article>
   );
 }

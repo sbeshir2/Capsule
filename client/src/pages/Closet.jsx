@@ -1,11 +1,20 @@
 // Closet.jsx - "The Closet" screen.
 // Loads the user's pieces from the server once, then does all the
 // searching, filtering and sorting in the browser so it feels instant.
+//
+// UI libraries used here:
+//   Radix (radix-ui)  - the dropdowns, the category buttons, the add/edit
+//                       pop-up and the little "saved" messages
+//   Motion (motion)   - cards sliding into place when the filters change,
+//                       and the black highlight gliding between categories
 import { useEffect, useMemo, useState } from 'react';
-import { getItems, deleteItem } from '../api.js';
-import { CATEGORIES, SEASONS, categoryOf, costPerWear } from '../closetOptions.js';
+import { Dialog, Toast, ToggleGroup } from 'radix-ui';
+import { AnimatePresence, motion } from 'motion/react';
+import { getItems, deleteItem, saveNotes } from '../api.js';
+import { CATEGORIES, SEASONS, categoryOf, colorHex, costPerWear } from '../closetOptions.js';
 import ItemCard from '../components/ItemCard.jsx';
 import ItemForm from '../components/ItemForm.jsx';
+import Picker from '../components/Picker.jsx';
 
 const SORTS = [
   { value: 'newest',     label: 'Newest first' },
@@ -13,6 +22,12 @@ const SORTS = [
   { value: 'least-worn', label: 'Least worn' },
   { value: 'best-value', label: 'Lowest cost per wear' },
   { value: 'name',       label: 'Name A–Z' }
+];
+
+const SEASON_FILTERS = [
+  { value: '', label: 'All seasons' },
+  ...SEASONS.filter(s => s.value !== 'all'),
+  { value: 'all', label: 'Year-round pieces' }
 ];
 
 function sortItems(items, sort) {
@@ -26,6 +41,13 @@ function sortItems(items, sort) {
   }
   return list; // 'newest' is the order the server already sends
 }
+
+// The black block behind the chosen category. Motion moves it from one
+// button to the next because every copy shares the same layoutId.
+const TabInk = () => (
+  <motion.span layoutId="closet-tab-ink" className="tab-ink"
+               transition={{ type: 'spring', stiffness: 520, damping: 42 }} />
+);
 
 export default function Closet() {
   const [items, setItems] = useState([]);
@@ -42,6 +64,10 @@ export default function Closet() {
 
   // The pop-up form: null = closed, 'new' = adding, or the item being edited
   const [formFor, setFormFor] = useState(null);
+
+  // The short message in the bottom corner ("Added to your closet")
+  const [toast, setToast] = useState(null);
+  const notify = text => setToast({ text, id: Date.now() });
 
   useEffect(() => {
     getItems()
@@ -75,13 +101,12 @@ export default function Closet() {
 
   // Called by the form after a successful save
   function handleSaved(saved) {
-    setItems(list => {
-      const exists = list.some(i => i.item_id === saved.item_id);
-      return exists
-        ? list.map(i => (i.item_id === saved.item_id ? saved : i))
-        : [saved, ...list];
-    });
+    const isNew = !items.some(i => i.item_id === saved.item_id);
+    setItems(list => isNew
+      ? [saved, ...list]
+      : list.map(i => (i.item_id === saved.item_id ? saved : i)));
     setFormFor(null);
+    notify(isNew ? `Added “${saved.name}” to your closet` : `Saved changes to “${saved.name}”`);
   }
 
   async function handleDelete(item) {
@@ -89,10 +114,19 @@ export default function Closet() {
     try {
       await deleteItem(item.item_id);
       setItems(list => list.filter(i => i.item_id !== item.item_id));
+      notify(`Deleted “${item.name}”`);
     } catch (err) {
       setError(err.message);
       throw err; // lets the card go back to its normal buttons
     }
+  }
+
+  // Called by a card's notes pop-up when it closes with changed notes.
+  // Throws on failure so the pop-up can stay open and show the message.
+  async function handleSaveNotes(item, notes) {
+    const updated = await saveNotes(item.item_id, notes);
+    setItems(list => list.map(i => (i.item_id === updated.item_id ? updated : i)));
+    notify(updated.notes ? `Note saved for “${item.name}”` : `Note removed from “${item.name}”`);
   }
 
   const filtering = search || color || brand || season || category !== 'all';
@@ -121,49 +155,29 @@ export default function Closet() {
             <input type="search" value={search} placeholder="Search by name or brand"
                    onChange={e => setSearch(e.target.value)} />
           </label>
-          <label className="filter">
-            <span className="filter-label">Color</span>
-            <select value={color} onChange={e => setColor(e.target.value)}>
-              <option value="">All colors</option>
-              {colors.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </label>
-          <label className="filter">
-            <span className="filter-label">Brand</span>
-            <select value={brand} onChange={e => setBrand(e.target.value)}>
-              <option value="">All brands</option>
-              {brands.map(b => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </label>
-          <label className="filter">
-            <span className="filter-label">Season</span>
-            <select value={season} onChange={e => setSeason(e.target.value)}>
-              <option value="">All seasons</option>
-              {SEASONS.filter(s => s.value !== 'all').map(s =>
-                <option key={s.value} value={s.value}>{s.label}</option>)}
-              <option value="all">Year-round pieces</option>
-            </select>
-          </label>
-          <label className="filter">
-            <span className="filter-label">Sort</span>
-            <select value={sort} onChange={e => setSort(e.target.value)}>
-              {SORTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
-          </label>
+          <Picker label="Color" value={color} onChange={setColor}
+                  options={[{ value: '', label: 'All colors' },
+                            ...colors.map(c => ({ value: c, label: c, swatch: colorHex(c) }))]} />
+          <Picker label="Brand" value={brand} onChange={setBrand}
+                  options={[{ value: '', label: 'All brands' }, ...brands.map(b => ({ value: b, label: b }))]} />
+          <Picker label="Season" value={season} onChange={setSeason} options={SEASON_FILTERS} />
+          <Picker label="Sort" value={sort} onChange={setSort} options={SORTS} />
         </div>
 
-        <div className="tabs" role="group" aria-label="Category">
-          <button type="button" className={category === 'all' ? 'tab is-on' : 'tab'}
-                  aria-pressed={category === 'all'} onClick={() => setCategory('all')}>
-            All <span className="tab-count">{matching.length}</span>
-          </button>
+        {/* Radix ToggleGroup: one category on at a time, arrow keys move between them */}
+        <ToggleGroup.Root type="single" className="tabs" aria-label="Category" value={category}
+                          onValueChange={v => { if (v) setCategory(v); }}>
+          <ToggleGroup.Item value="all" className="tab">
+            {category === 'all' && <TabInk />}
+            <span className="tab-text">All <span className="tab-count">{matching.length}</span></span>
+          </ToggleGroup.Item>
           {CATEGORIES.map(c => (
-            <button key={c.value} type="button" className={category === c.value ? 'tab is-on' : 'tab'}
-                    aria-pressed={category === c.value} onClick={() => setCategory(c.value)}>
-              {c.label} <span className="tab-count">{countIn(c.value)}</span>
-            </button>
+            <ToggleGroup.Item key={c.value} value={c.value} className="tab">
+              {category === c.value && <TabInk />}
+              <span className="tab-text">{c.label} <span className="tab-count">{countIn(c.value)}</span></span>
+            </ToggleGroup.Item>
           ))}
-        </div>
+        </ToggleGroup.Root>
       </div>
 
       {error && <p className="form-error" role="alert">{error}</p>}
@@ -184,18 +198,41 @@ export default function Closet() {
         </div>
       ) : (
         <div className="closet-grid">
-          {shown.map(item => (
-            <ItemCard key={item.item_id} item={item} onEdit={setFormFor} onDelete={handleDelete} />
-          ))}
+          {/* popLayout: cards leaving fade out while the rest slide into their new spots */}
+          <AnimatePresence mode="popLayout">
+            {shown.map(item => (
+              <ItemCard key={item.item_id} item={item} onEdit={setFormFor} onDelete={handleDelete}
+                        onSaveNotes={handleSaveNotes} />
+            ))}
+          </AnimatePresence>
         </div>
       )}
 
-      {formFor && (
-        <ItemForm
-          item={formFor === 'new' ? null : formFor}
-          onSaved={handleSaved}
-          onClose={() => setFormFor(null)}
-        />
+      {/* Radix Dialog: traps the keyboard inside the pop-up, closes on Esc or
+          a click outside, and stops the page behind it from scrolling */}
+      <Dialog.Root open={formFor !== null} onOpenChange={open => { if (!open) setFormFor(null); }}>
+        <AnimatePresence>
+          {formFor && (
+            <ItemForm
+              key={formFor === 'new' ? 'new' : formFor.item_id}
+              item={formFor === 'new' ? null : formFor}
+              onSaved={handleSaved}
+              onClose={() => setFormFor(null)}
+            />
+          )}
+        </AnimatePresence>
+      </Dialog.Root>
+
+      {/* Radix Toast: shows in the bottom corner, hides itself after a few
+          seconds, and can be swiped away. A new message replaces the old one. */}
+      {toast && (
+        <Toast.Root key={toast.id} className="toast" duration={3500}>
+          <Toast.Description className="toast-text">{toast.text}</Toast.Description>
+          <Toast.Close className="toast-close" aria-label="Dismiss">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </Toast.Close>
+        </Toast.Root>
       )}
     </section>
   );
